@@ -1,0 +1,287 @@
+﻿
+@model WebAppVenueManagement.ViewModel.BookingViewModel
+
+@{
+    ViewBag.Title = "Index";
+}
+
+<script src="~/Scripts/jquery-3.4.1.min.js"></script>
+<script src="~/Scripts/jquery-ui.min.js"></script>
+
+<script type="text/javascript">
+
+
+    $(document).ready(function () {
+        LoadRoomDetails();
+        $("#txtRoomId").val("0")
+        $("#btnSave").click(function () {
+            if (!$("#formCustomerBooking").valid()) {
+                return;
+
+            }
+            AddCustomerBooking();
+        });
+    });
+
+    function DeleteRoom(roomId) {
+        var result = confirm("Are you sure you want to delete?");
+        if (result === false) {
+            return false;
+        }
+
+        $.ajax({
+            async: true,
+            type: 'GET',
+            dataType: 'JSON',
+            contentType: 'application/json; charset=utf-8',
+            data: { roomId: roomId },
+
+            url: '/Room/DeleteRoomDetails',
+            success: function (data) {
+                if (data.success === true) {
+                    alert(data.message);
+                    LoadRoomDetails();
+                }
+            },
+            error: function () {
+                alert("There has been an error processing your request.");
+            }
+
+
+        });
+
+    }
+
+    function EditRoom(roomId) {
+
+        $.ajax({
+            async: true,
+            type: 'GET',
+            dataType: 'JSON',
+            contentType: 'application/json; charset=utf-8',
+            data: { roomId: roomId },
+
+            url: '/Room/EditRoomDetails',
+            success: function (data) {
+
+                $("#txtRoomNumber").val(data.RoomNumber);
+                $("#txtRoomPrice").val(data.RoomPrice);
+
+                $("#ddBookingStatus").val(data.BookingStatusId);
+
+                $("#ddRoomType").val(data.RoomType);
+                $("#txtRoomCapacity").val(data.RoomCapacity);
+                $("#txtRoomDescription").val(data.RoomDescription);
+                //$("#imgRoom").attr('src', "../RoomImages/"+data.RoomImage);
+                $("#add-room-modal").modal({ show: true });
+                $("#txtRoomId").val(data.RoomId);
+                $("#btnSave").text("Update");
+                console.log('success');
+
+            },
+            error: function () {
+                alert("There has been an error processing your request.");
+            }
+
+
+        });
+    }
+
+
+
+    function LoadRoomDetails() {
+
+        $.ajax({
+            async: true,
+            type: 'GET',
+            contentType: false,
+            processData: false,
+            url: '/Room/GetAllRooms',
+            success: function (data) {
+                $("#divLoadRoomDetails").html(data);
+
+            },
+            error: function () {
+                alert('There is a problem with processing your request. Please request after some time.');
+            }
+
+
+        });
+
+    }
+
+
+    function AddCustomerBooking() {
+        var objBookingViewModel = {};
+        objBookingViewModel.CustomerName = $("#txtCustomerNameId").val();
+        objBookingViewModel.CustomerAddress = $("#txtCustomerAddress").val();
+        objBookingViewModel.CustomerPhone = $("#txtCustomerPhone").val();
+        objBookingViewModel.BookingFrom = $("#txtBookingFrom").val();
+        objBookingViewModel.BookingTo = $("#txtBookingTo").val();
+
+        objBookingViewModel.AssignRoomId = $("#AssignRoomId").val();
+        objBookingViewModel.NumberOfMembers= $("#txtNumberOfMembers").val();
+        
+
+
+        $.ajax({
+            async: true,
+            type: 'GET',
+            dataType: 'JSON',
+            contentType: 'application/json; charset=utf-8',
+
+            url: '/Booking/Index',
+            data: JSON.stringify(objBookingViewModel),
+            success: function (data) {
+                
+            },
+            error: function () {
+                alert("There has been an error processing your request.");
+            }
+
+
+        });
+    }
+
+
+
+    function ResetRoomInformation() {
+        $("#txtRoomNumber").val('');
+        $("#txtRoomPrice").val('');
+
+        $("#ddBookingStatus").val(1);
+
+        $("#ddRoomType").val(1);
+        $("#txtRoomCapacity").val('');
+        $("#txtRoomDescription").val('');
+        $("#UploadImage").val('');
+
+        $("#txtRoomNumber").focus('');
+        $("#imgRoom").removeAttr('src');
+        $("#txtRoomId").val(0);
+        $("#btnSave").val("Save");
+    }
+
+    function dateTimePicker() {
+        $(".datepicker").datepicker({
+            dateFormat: "dd-M-yy",
+            changeMonth: true,
+            changeYear: true,
+            showOn: "button",
+            sideBySide: true,
+            controlType: "select",
+            buttonText: "<span class='glyphicon glyphicon calendar'></span>",
+            minDate: new Date()
+        })
+
+        $("#textBookingFrom").change(function () {
+            var date2 = $("#txtBookingFrom").datePicker("getDate", "+1d");
+            date2.setDate(date2.getDate() + 1);
+            $("#txtBookingTo").val().datepicker("option", "minDate", date2);
+            $("#txtBookingTo").datepicker("setDate", date2);
+        })
+    }
+
+
+</script>
+
+
+
+<div style="margin-top: 20px">
+
+    <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#divNewBooking" data-backdrop="static" data-keyboard="false">
+        New Booking
+    </button>
+</div>
+
+<div class="modal fade" id="divNewBooking" tabindex="-1" role="dialog" aria-labelledby="add-room-modal-2" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="add-room-modal-2">Add New Booking</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="formCustomerBooking">
+                    <div class="container">
+
+
+                        <div class="form-group">
+                            @Html.LabelFor(Model => Model.CustomerName, new { @class = "control-label" })
+                            @Html.TextBoxFor(Model => Model.CustomerName, new { @class = "form-control", @id = "txtCustomerName" })
+                            @Html.ValidationMessageFor(Model => Model.CustomerName, validationMessage: null, htmlAttributes: new { @class = "txt-Danger" })
+
+                        </div>
+                        <div class="form-group">
+                            @Html.LabelFor(Model => Model.CustomerAddress, new { @class = "control-label" })
+                            @Html.TextBoxFor(Model => Model.CustomerAddress, new { @class = "form-control", @id = "txtCustomerAddress" })
+                            @Html.ValidationMessageFor(Model => Model.CustomerAddress, validationMessage: null, htmlAttributes: new { @class = "txt-Danger" })
+
+
+                        </div>
+
+
+
+
+                        <div class="form-group" ">
+                            @Html.LabelFor(Model => Model.CustomerPhone, new { @class = "control-label" })
+                            @Html.TextBoxFor(Model => Model.CustomerPhone, new { @class = "form-control", @id = "txtPhone" })
+                            @Html.ValidationMessageFor(Model => Model.CustomerPhone, validationMessage: null, htmlAttributes: new { @class = "txt-Danger" })
+
+
+                        </div>
+
+                        <div class="form-group">
+                            @Html.LabelFor(Model => Model.BookingFrom, new { @class = "control-label" })
+                            @Html.EditorFor(Model => Model.BookingFrom, new { htmlAttributes = new { @readonly = true, Value = Model.BookingFrom.ToString(format: "dd-MMM-yyyy"), @class = "form-control datepicker", @id = "txtBookingFrom" } })
+                            @Html.ValidationMessageFor(Model => Model.BookingFrom, validationMessage: null, htmlAttributes: new { @class = "txt-Danger" })
+                        </div>
+
+
+
+                        <div class="form-group">
+                            @Html.LabelFor(Model => Model.BookingTo, new { @class = "control-label" })
+                            @Html.EditorFor(Model => Model.BookingTo, new { htmlAttributes = new { @readonly = true, Value = Model.BookingTo.ToString(format: "dd-MMM-yyyy"), @class = "form-control datepicker", @id = "txtBookingFrom" } })
+                            @Html.ValidationMessageFor(Model => Model.BookingTo, validationMessage: null, htmlAttributes: new { @class = "txt-Danger" })
+
+
+                        </div>
+
+                        <div class="form-group">
+                            @Html.LabelFor(Model => Model.AssignRoomId, new { @class = "control-label" })
+                            @Html.DropDownListFor(Model => Model.AssignRoomId, @Model.ListOfRooms, new { @class = "form-control", @id = "ddAssignRoomId" })
+                            @Html.ValidationMessageFor(Model => Model.AssignRoomId, validationMessage: null, htmlAttributes: new { @class = "txt-Danger" })
+                        </div>
+
+
+
+                        <div class="form-group">
+                            @Html.LabelFor(Model => Model.NumberOfMembers, new { @class = "control-label" })
+                            @Html.EditorFor(Model => Model.NumberOfMembers, new { @class = "form-control", @id = "txtNumberOfMembers" })
+                            @Html.ValidationMessageFor(Model => Model.NumberOfMembers, validationMessage: null, htmlAttributes: new { @class = "txt-Danger" })
+
+
+                        </div>
+
+
+
+                    </div>
+
+
+
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-danger" data-dismiss="modal">Close</button>
+                <button id="btnSave" type="button" class="btn btn-success">Save</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<div style="margin-top: 10px"></div>
+
+
